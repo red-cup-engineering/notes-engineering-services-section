@@ -1,5 +1,5 @@
 {
-  "name": "@red-cup-engineering/notes-engineering-services-section",
+  "name": "@red-cup-engineering/notes-services-section",
   "version": "0.1.0",
   "type": "module",
   "description": "Restricts articles to dated research notes deposited beneath admitted actuator nodes.",
