@@ -1,11 +1,11 @@
 {
-  "name": "@red-cup-engineering/notes-services-section",
+  "name": "@red-cup-engineering/notes-engineering-services-section",
   "version": "0.1.0",
   "type": "module",
   "description": "Restricts articles to dated research notes deposited beneath admitted actuator nodes.",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/red-cup-engineering/notes-services-section.git"
+    "url": "git+https://github.com/red-cup-engineering/notes-engineering-services-section.git"
   },
   "x-capability-recovery": [
     {
