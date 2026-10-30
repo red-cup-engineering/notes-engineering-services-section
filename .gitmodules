@@ -1,4 +1,0 @@
-[submodule "note-resource-service"]
-	path = services/note-resource-service
-	url = https://github.com/red-cup-engineering/note-resource-service.git
-	branch = main
