@@ -24,9 +24,9 @@
   },
   "dependencies": {
     "@red-cup-engineering/computer-article-engineering-services-section": "workspace:*",
-    "@red-cup-engineering/computer-content-address-engineering-services-section": "workspace:*",
     "@red-cup-engineering/json-engine": "workspace:*",
-    "@red-cup-engineering/markdown-engineering-services-section": "workspace:*"
+    "@red-cup-engineering/markdown-engineering-services-section": "workspace:*",
+    "@red-cup-engineering/computer-code-engine": "0.1.4"
   },
   "license": "MIT",
   "funding": {
