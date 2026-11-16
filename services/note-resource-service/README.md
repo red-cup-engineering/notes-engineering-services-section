@@ -101,7 +101,13 @@ would otherwise be skipped for placement. This returns a separate
 `dated` or `other`; `pathDate` exists only when the original path grammar
 accepts a date. The shared Markdown reader reports frontmatter as `parsed`,
 `absent`, or `invalid`; even unreadable frontmatter leaves the file in the
-inventory. Parsing is not admission. The catalog does not determine when a
+inventory. For the existing Science `relocated-research-source` convention,
+`frontmatter.relocation` reports `declared` if a nonblank canonical source is
+authored, or `missing-target` otherwise. A relocation claim is still neither
+a verified link nor a note admission, and it does not copy the target or
+reveal its URL. Resolve the original file's link using Census observations
+before treating it as a usable route; do not count a declared relocation as
+a second research note solely from its placement. Parsing is not admission. The catalog does not determine when a
 note was written, whether it is live or public, or which Git revision it belongs to.
 No text or loose frontmatter is returned. Match the relative path and digest
 against the existing corpus census for revision, admission, or graph claims.

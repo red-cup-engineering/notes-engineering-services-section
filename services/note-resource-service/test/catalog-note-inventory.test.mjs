@@ -58,3 +58,26 @@ test("the recovery inventory retains out-of-form notes without changing the date
   await assert.rejects(catalogNodeNotes({nodeRoot, selection: "all-carriers", maximumBytes: 5}), /maximumBytes/);
   assert.deepEqual(await catalogNodeNotes({nodeRoot, selection: "dated"}), legacy);
 });
+
+test("a source relocation remains visible for verification without reporting its private target", async t => {
+  const nodeRoot = await mkdtemp(join(tmpdir(), "node-note-relocation-"));
+  t.after(() => rm(nodeRoot, {recursive: true, force: true}));
+  const root = join(nodeRoot, NOTE_ROOT);
+  await mkdir(root, {recursive: true});
+  const link = "https://github.com/private/example/blob/demo/note.md";
+  await Promise.all([
+    writeFile(join(root, "former.md"), `---\nstatus: relocated-research-source\ncanonical-source: "${link}"\n---\n\nFind the original.\n`),
+    writeFile(join(root, "missing.md"), "---\nstatus: relocated-research-source\ncanonical-source: [not, a, scalar]\n---\n"),
+    writeFile(join(root, "citation.md"), `---\nstatus: research\ncanonical-source: "${link}"\n---\n`),
+  ]);
+  const old = await catalogNodeNotes({nodeRoot});
+  assert.equal(old.resourceCount, 0);
+  const inventory = await catalogNodeNotes({nodeRoot, selection: "all-carriers"});
+  assert.deepEqual(Object.fromEntries(inventory.resources.map(row => [row.path.split("/").at(-1), row.frontmatter])), {
+    "former.md": {status:"parsed", relocation:"declared"},
+    "missing.md": {status:"parsed", relocation:"missing-target"},
+    "citation.md": {status:"parsed"},
+  });
+  assert.doesNotMatch(JSON.stringify(inventory), /github[.]com|Find the original/);
+  assert.deepEqual(await catalogNodeNotes({nodeRoot}), old);
+});

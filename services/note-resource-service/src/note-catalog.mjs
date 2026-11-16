@@ -8,7 +8,14 @@ function observeFrontmatter(bytes) {
   try {
     const text = new TextDecoder("utf-8", { fatal: true }).decode(bytes);
     const observed = readMarkdownFrontmatter(text);
-    return Object.freeze({ status: observed.format == null ? "absent" : "parsed" });
+    if (observed.format == null) return Object.freeze({ status: "absent" });
+    const metadata = observed.frontmatter;
+    const relocation = metadata.status === "relocated-research-source"
+      ? typeof metadata["canonical-source"] === "string" && metadata["canonical-source"].trim() !== ""
+        ? "declared"
+        : "missing-target"
+      : undefined;
+    return Object.freeze({ status: "parsed", ...(relocation === undefined ? {} : { relocation }) });
   } catch {
     return Object.freeze({ status: "invalid" });
   }
