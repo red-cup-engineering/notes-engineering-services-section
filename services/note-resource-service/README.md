@@ -95,14 +95,24 @@ path, byte length, content identity and resource identity. The default limits
 are 10,000 notes and 64 MiB of content; callers may supply `maximumFiles`
 and `maximumBytes`.
 
+For recovery, set `selection: "all-carriers"` to include Markdown files that
+would otherwise be skipped for placement. This returns a separate
+`TypedNodeNoteInventoryReceipt`. Each result states `placement` as
+`dated` or `other`; `pathDate` exists only when the original path grammar
+accepts a date. The shared Markdown reader reports frontmatter as `parsed`,
+`absent`, or `invalid`; even unreadable frontmatter leaves the file in the
+inventory. Parsing is not admission. The catalog does not determine when a
+note was written, whether it is live or public, or which Git revision it belongs to.
+No text or loose frontmatter is returned. Match the relative path and digest
+against the existing corpus census for revision, admission, or graph claims.
+The dated-only default and its identities are unchanged.
+
 The [catalog module](scripts/catalog-node-notes.mjs) and
 [deposit module](scripts/deposit-note-carrier.mjs) also export named operation
 descriptors whose `operation` functions accept the same inputs.
 
 Use Node 22 or newer in a workspace that resolves the dependencies in
-[`package.json`](package.json), then run `npm run verify`. The existing
-[deposit and catalog tests](test/note-resources.test.mjs) and
-[generation tests](test/note-generation.test.mjs) cover path identity,
-metadata preservation, source digests, validation findings, mode behavior
-and rejected inputs. The [implementation](src/note-resources.mjs) defines the
-current behavior.
+[`package.json`](package.json), then run `npm run verify`. The
+[catalog test](test/catalog-note-inventory.test.mjs) covers both selections,
+byte and path identities, malformed metadata, symlink exclusion, and limits.
+The test does not execute the deposit operation.

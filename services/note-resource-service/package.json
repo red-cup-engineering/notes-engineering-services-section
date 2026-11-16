@@ -15,8 +15,9 @@
     "./deposit-note-carrier": "./scripts/deposit-note-carrier.mjs"
   },
   "scripts": {
-    "check": "node --check src/note-resources.mjs",
-    "verify": "npm run check"
+    "check": "node --check src/note-resources.mjs && node --check src/note-catalog.mjs && node --check src/note-resource-identity.mjs",
+    "test": "node --test test/catalog-note-inventory.test.mjs",
+    "verify": "npm run check && npm test"
   },
   "engines": {
     "node": ">=22"

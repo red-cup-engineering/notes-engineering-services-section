@@ -1,6 +1,6 @@
-import { createHash, randomUUID } from "node:crypto";
-import { lstat, mkdir, readdir, readFile, rename, unlink, writeFile } from "node:fs/promises";
-import { basename, dirname, extname, relative, resolve, sep } from "node:path";
+import { randomUUID } from "node:crypto";
+import { mkdir, readFile, rename, unlink, writeFile } from "node:fs/promises";
+import { basename, dirname } from "node:path";
 
 import { canonicalJson, canonicalizeJson, JSON_RESOURCE_ENVELOPE } from "@red-cup-engineering/json-engine/canonical";
 import { parseDatedNotePath, projectNotePath } from "@red-cup-engineering/computer-article-engineering-services-section/article-content-path-grammar";
@@ -9,56 +9,12 @@ import { readMarkdownFrontmatter } from "@red-cup-engineering/markdown-engineeri
 import { siteNoteFrontmatterConformance } from "@red-cup-engineering/markdown-engineering-services-section/markdown-projector";
 import { validateMarkdownDocument } from "@red-cup-engineering/markdown-engineering-services-section/validate-markdown-document";
 
-export const NOTE_ROOT = projectNotePath("");
-export const NOTE_PROOF_PATH = Object.freeze([
-  "file", "data", "content", "text", "document", "article", "note",
-]);
-export const NOTE_RESOURCE_CATALOG = Object.freeze({
-  profile: "org.red-cup-engineering.typed-resource-catalog.v1",
-  nodes: Object.freeze(NOTE_PROOF_PATH.map((type, index) => Object.freeze({
-    type,
-    parent: index === 0 ? null : NOTE_PROOF_PATH[index - 1],
-  }))),
-  imports: Object.freeze([
-    "@red-cup-engineering/typed-resource-catalog",
-    "@red-cup-engineering/markdown-file-reading-service",
-    "@red-cup-engineering/markdown-file-writing-service",
-    "@red-cup-engineering/computer-code-engine/semiotic-expression-notation/semantic-content-identity",
-    "@red-cup-engineering/immutable-content-custody-service",
-    "@red-cup-engineering/organizing-a-knowledge-vault",
-    "@red-cup-engineering/standards-conformance-services-section",
-  ]),
-});
-const DATE = /^(\d{4})-(\d{2})-(\d{2})$/u;
+import { NOTE_PROOF_PATH, admittedRoot, inside, validDate, digest, text, resourceIdentity, receipt } from "./note-resource-identity.mjs";
+export { NOTE_ROOT, NOTE_PROOF_PATH, NOTE_RESOURCE_CATALOG } from "./note-resource-identity.mjs";
+export { catalogNodeNotes } from "./note-catalog.mjs";
+
 const SHA256 = /^sha256:([a-f0-9]{64})$/u;
 
-function digest(bytes) { return `sha256:${createHash("sha256").update(bytes).digest("hex")}`; }
-function canonical(value) {
-  if (Array.isArray(value)) return `[${value.map(canonical).join(",")}]`;
-  if (value && typeof value === "object") return `{${Object.keys(value).sort().map((key) => `${JSON.stringify(key)}:${canonical(value[key])}`).join(",")}}`;
-  return JSON.stringify(value);
-}
-function receipt(body) { return Object.freeze({ id: `urn:sha256:${createHash("sha256").update(canonical(body)).digest("hex")}`, ...body }); }
-function resourceIdentity(nodeRoot, path, contentIdentity) {
-  return `urn:sha256:${createHash("sha256").update(canonical({ nodeRoot, path, contentIdentity })).digest("hex")}`;
-}
-function text(value, field, maximum = 4096) {
-  if (typeof value !== "string" || value.trim().length === 0 || value.trim().length > maximum) throw new TypeError(`${field} must be 1-${maximum} characters`);
-  return value.trim();
-}
-function admittedRoot(nodeRoot) { return resolve(text(nodeRoot, "nodeRoot", 16_384)); }
-function inside(root, candidate) {
-  const target = resolve(root, candidate);
-  if (target !== root && !target.startsWith(`${root}${sep}`)) throw new RangeError("resource path escaped the admitted actuator node");
-  return target;
-}
-function validDate(value) {
-  const match = DATE.exec(text(value, "date", 10));
-  if (!match) throw new TypeError("date must be YYYY-MM-DD");
-  const instant = new Date(`${value}T00:00:00.000Z`);
-  if (Number.isNaN(instant.valueOf()) || instant.toISOString().slice(0, 10) !== value) throw new TypeError("date must be a real calendar date");
-  return { value, year: match[1], month: match[2], day: match[3] };
-}
 function slug(value) {
   const normalized = text(value, "slug", 160).toLowerCase().normalize("NFKD").replace(/[^a-z0-9]+/gu, "-").replace(/^-|-$/gu, "");
   if (!normalized) throw new TypeError("slug must contain an ASCII letter or digit");
@@ -111,34 +67,6 @@ function noteText(input) {
   if (!validation.parseable) throw new TypeError("generated note frontmatter is not parseable");
   return Object.freeze({ content, sourceSha256, findings: validation.findings });
 }
-export async function catalogNodeNotes({ nodeRoot, maximumFiles = 10_000, maximumBytes = 64 * 1024 * 1024 }) {
-  const root = admittedRoot(nodeRoot), notesRoot = inside(root, NOTE_ROOT), resources = [];
-  async function walk(directory) {
-    let entries;
-    try { entries = await readdir(directory, { withFileTypes: true }); } catch (error) { if (error?.code === "ENOENT") return; throw error; }
-    for (const entry of entries.sort((a, b) => a.name.localeCompare(b.name))) {
-      const path = inside(notesRoot, resolve(directory, entry.name));
-      const metadata = await lstat(path);
-      if (metadata.isSymbolicLink()) continue;
-      if (metadata.isDirectory()) { await walk(path); continue; }
-      if (!metadata.isFile() || ![".md", ".markdown"].includes(extname(path).toLowerCase())) continue;
-      const locator = relative(notesRoot, path).split(sep).join("/");
-      const dated = parseDatedNotePath(locator);
-      if (!dated || locator.split("/").length !== 4) continue;
-      try { validDate(dated.date); } catch { continue; }
-      if (resources.length >= maximumFiles) throw new RangeError("note catalog exceeds maximumFiles");
-      const bytes = await readFile(path);
-      const byteLength = resources.reduce((sum, item) => sum + item.byteLength, 0) + bytes.length;
-      if (byteLength > maximumBytes) throw new RangeError("note catalog exceeds maximumBytes");
-      const pathReading = `${NOTE_ROOT}/${locator}`, contentIdentity = digest(bytes);
-      resources.push(Object.freeze({ identity: resourceIdentity(root, pathReading, contentIdentity), contentIdentity, byteLength: bytes.length, mediaType: "text/markdown", path: pathReading, proofPath: NOTE_PROOF_PATH }));
-    }
-  }
-  await walk(notesRoot);
-  const body = { type: "TypedNodeNoteCatalogReceipt", version: 1, nodeRoot: root, proofPath: NOTE_PROOF_PATH, resourceCount: resources.length, resources };
-  return receipt(body);
-}
-
 export async function depositNoteCarrier(input) {
   const root = admittedRoot(input.nodeRoot), date = validDate(input.date), title = text(input.title, "title", 240), name = `${date.value}-note-on-${slug(input.slug ?? title)}.md`;
   const relativePath = projectNotePath(`${date.year}/${date.month}/${date.day}/${name}`), target = inside(root, relativePath);

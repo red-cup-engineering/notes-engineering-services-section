@@ -7,20 +7,19 @@
 <!-- 561-group-standards:badges:end -->
 
 Notes Engineering supplies the dated research-note form beneath an admitted
-actuator node. The selected
-[note-resource service](https://github.com/red-cup-engineering/note-resource-service/blob/4c8b52d75f32bed56ec4db825347e398a5d6ed3d/README.md) catalogs
-existing notes and deposits supplied Markdown with its source attribution.
+actuator node. The [note-resource service](services/note-resource-service/README.md)
+catalogs existing notes and deposits supplied Markdown with its source
+attribution.
 
 Notes use the article path
 `content/text/documents/articles/notes/YYYY/MM/DD/YYYY-MM-DD-note-on-<topic>.md`.
 Their directory path carries the restriction from file through data, content,
 text, document and article to note.
 
-The [service guide](https://github.com/red-cup-engineering/note-resource-service/blob/4c8b52d75f32bed56ec4db825347e398a5d6ed3d/README.md) owns the deposit
+The [service guide](services/note-resource-service/README.md) owns the deposit
 and catalog interfaces, metadata-preservation rules, receipt identities and
-verification instructions. Maintain those details with the implementation.
-This section selects that source through [`.gitmodules`](https://github.com/red-cup-engineering/notes-engineering-services-section/blob/main/.gitmodules) and its
-Git submodule revision.
+verification instructions. The implementation is currently maintained in this
+repository under `services/note-resource-service`.
 
 A deposited note remains research material. Its receipt records the stored
 resource; publication, subsequent actuation and engineering acceptance require
